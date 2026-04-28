@@ -580,7 +580,7 @@ class CMB2_Hookup extends CMB2_Hookup_Base {
 		);
 		$title_tag = '<h2 class="hndle"><span>' . esc_attr( $title ) . '</span></h2>' . "\n";
 
-		echo '<div id="' . $cmb_id . '" class="' . postbox_classes( $cmb_id, $page ) . $hidden_class . '">' . "\n";
+		echo '<div id="' . esc_attr($cmb_id) . '" class="' . postbox_classes( $cmb_id, $page ) . $hidden_class . '">' . "\n";
 
 		if ( $add_handle ) {
 
@@ -746,7 +746,7 @@ class CMB2_Hookup extends CMB2_Hookup_Base {
 	public function user_new_metabox( $section ) {
 		if ( $section === $this->cmb->prop( 'new_user_section' ) ) {
 			$object_id = $this->cmb->object_id();
-			$this->cmb->object_id( isset( $_REQUEST['user_id'] ) ? $_REQUEST['user_id'] : $object_id );
+			$this->cmb->object_id( isset( $_REQUEST['user_id'] ) ? absint($_REQUEST['user_id']) : $object_id );
 			$this->user_metabox();
 		}
 	}
@@ -899,7 +899,7 @@ class CMB2_Hookup extends CMB2_Hookup_Base {
 	 */
 	public function save_user( $user_id ) {
 		// check permissions.
-		if ( $this->can_save( 'user' ) ) {
+		if (current_user_can( 'edit_user', $user_id ) && $this->can_save( 'user' ) ) {
 			$this->cmb->save_fields( $user_id, 'user', $_POST );
 		}
 	}

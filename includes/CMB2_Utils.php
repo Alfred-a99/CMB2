@@ -568,9 +568,19 @@ class CMB2_Utils {
 	 * @return DateTime|null
 	 */
 	public static function unserialize_datetime( $date_value ) {
-		$datetime = @unserialize( trim( $date_value ), array( 'allowed_classes' => array( 'DateTime' ) ) );
-
-		return $datetime && $datetime instanceof DateTime ? $datetime : null;
+		$trimmed = trim( $date_value );
+ 
+		if ( ! is_string( $trimmed ) || empty( $trimmed ) ) {
+			return null;
+		}
+	
+		try {
+			$datetime = unserialize( $trimmed, array( 'allowed_classes' => array( 'DateTime' ) ) );
+		} catch ( \Throwable $e ) {
+			return null;
+		}
+	
+		return $datetime instanceof DateTime ? $datetime : null;
 	}
 
 	/**

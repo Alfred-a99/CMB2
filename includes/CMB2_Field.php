@@ -480,7 +480,10 @@ class CMB2_Field extends CMB2_Base {
 		$cb = $this->maybe_callback( 'sanitization_cb' );
 		if ( false === $cb ) {
 			// If requesting NO validation, return meta value.
-			return $meta_value;
+			if ( is_array( $meta_value ) ) {
+				return array_map( 'sanitize_text_field', $meta_value );
+			}
+			return sanitize_text_field( $meta_value );
 		} elseif ( $cb ) {
 			// Ok, callback is good, let's run it.
 			return call_user_func( $cb, $meta_value, $this->args(), $this );
@@ -703,7 +706,28 @@ class CMB2_Field extends CMB2_Base {
 		return false;
 	}
 
+	
 	/**
+	 * Allowed escaping functions for the $func parameter.
+	 *
+	 * @var string[]
+	 */
+	private static $allowed_escape_funcs = array(
+		'esc_attr',
+		'esc_html',
+		'esc_url',
+		'esc_textarea',
+		'esc_js',
+		'wp_kses_post',
+		'wp_kses_data',
+		'sanitize_text_field',
+		'absint',
+		'intval',
+		'stripslashes',
+		'wp_strip_all_tags',
+	);
+
+ 	/**
 	 * Escape the value before output. Defaults to 'esc_attr()'
 	 *
 	 * @since  1.0.1
@@ -712,21 +736,22 @@ class CMB2_Field extends CMB2_Base {
 	 * @return mixed                Final value.
 	 */
 	public function escaped_value( $func = 'esc_attr', $meta_value = '' ) {
-
+ 
 		if ( null !== $this->escaped_value ) {
 			return $this->escaped_value;
 		}
-
+ 
 		$meta_value = $meta_value ? $meta_value : $this->value();
-
+ 
 		// Check if the field has a registered escaping callback.
+		// maybe_callback() now enforces the blocked-callback denylist.
 		if ( $cb = $this->maybe_callback( 'escape_cb' ) ) {
 			// Ok, callback is good, let's run it.
 			return call_user_func( $cb, $meta_value, $this->args(), $this );
 		}
-
+ 
 		$field_type = $this->type();
-
+ 
 		/**
 		 * Filter the value for escaping before it is ouput.
 		 *
@@ -745,16 +770,39 @@ class CMB2_Field extends CMB2_Base {
 		if ( null !== $esc ) {
 			return $esc;
 		}
-
+ 
 		if ( false === $cb || $this->escaping_exception() ) {
 			// If requesting NO escaping, return meta value.
 			return $this->val_or_default( $meta_value );
 		}
-
-		// escaping function passed in?
-		$func       = $func ? $func : 'esc_attr';
+ 
+		// Validate the escaping function against the allowlist.
+		$func = $func ? $func : 'esc_attr';
+ 
+		/**
+		 * Filter the list of allowed escaping functions for the $func parameter.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param string[] $allowed Array of allowed function name strings.
+		 */
+		$allowed = apply_filters( 'cmb2_allowed_escape_functions', self::$allowed_escape_funcs );
+ 
+		if ( ! in_array( $func, $allowed, true ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				sprintf(
+					/* translators: %s: The disallowed function name. */
+					esc_html__( 'Escape function "%s" is not in the allowed list. Falling back to esc_attr().', 'cmb2' ),
+					$func
+				),
+				'2.11.0'
+			);
+			$func = 'esc_attr';
+		}
+ 
 		$meta_value = $this->val_or_default( $meta_value );
-
+ 
 		if ( is_array( $meta_value ) ) {
 			foreach ( $meta_value as $key => $value ) {
 				$meta_value[ $key ] = call_user_func( $func, $value );
@@ -762,7 +810,7 @@ class CMB2_Field extends CMB2_Base {
 		} else {
 			$meta_value = call_user_func( $func, $meta_value );
 		}
-
+ 
 		$this->escaped_value = $meta_value;
 		return $this->escaped_value;
 	}

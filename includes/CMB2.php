@@ -532,10 +532,10 @@ class CMB2 extends CMB2_Base {
 			$class = $desc ? ' cmb-group-description' : '';
 			echo '<div class="cmb-row', $class, '"><div class="cmb-th">';
 			if ( $label ) {
-				echo '<h2 class="cmb-group-name">', $label, '</h2>';
+				echo '<h2 class="cmb-group-name">', esc_html($label), '</h2>';
 			}
 			if ( $desc ) {
-				echo '<p class="cmb2-metabox-description">', $desc, '</p>';
+				echo '<p class="cmb2-metabox-description">', wp_kses_post( $desc), '</p>';
 			}
 			echo '</div></div>';
 		}
@@ -759,7 +759,18 @@ class CMB2 extends CMB2_Base {
 	public function save_fields( $object_id = 0, $object_type = '', $data_to_save = array() ) {
 
 		// Fall-back to $_POST data.
-		$this->data_to_save = ! empty( $data_to_save ) ? $data_to_save : $_POST;
+		$raw_data  = ! empty( $data_to_save ) ? $data_to_save : $_POST;
+
+		$allowed_keys = array_merge(
+			wp_list_pluck( $this->prop( 'fields' ), 'id' ),
+			array( $this->nonce_field(), '_wp_http_referer' )
+		);
+		$this->data_to_save = array_intersect_key(
+			$raw_data,
+			array_flip( $allowed_keys )
+		);
+
+	
 		$object_id = $this->object_id( $object_id );
 		$object_type = $this->object_type( $object_type );
 
@@ -1257,12 +1268,16 @@ class CMB2 extends CMB2_Base {
 			return $found_key;
 		}
 
-		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], $keys ) ) {
-			$found_key = $_GET['page'];
+		$page   = isset( $_GET['page'] )? sanitize_text_field(wp_unslash($_GET['page'])): '';
+
+		$action = isset( $_POST['action'] )? sanitize_text_field( wp_unslash($_POST['action'])): '';
+
+		if ( $page && in_array( $page, $keys, true ) ) {
+			$found_key = $page;
 		}
 
-		if ( ! empty( $_POST['action'] ) && in_array( $_POST['action'], $keys ) ) {
-			$found_key = $_POST['action'];
+		if ( $action && in_array( $action, $keys, true ) ) {
+			$found_key = $action;
 		}
 
 		return $found_key ? $found_key : false;

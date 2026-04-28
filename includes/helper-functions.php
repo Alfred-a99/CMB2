@@ -322,7 +322,8 @@ function cmb2_print_metabox_form( $meta_box, $object_id = 0, $args = array() ) {
 		// check nonce.
 		&& isset( $_POST['submit-cmb'], $_POST['object_id'], $_POST[ $cmb->nonce() ] )
 		&& wp_verify_nonce( $_POST[ $cmb->nonce() ], $cmb->nonce() )
-		&& $object_id && $_POST['object_id'] == $object_id
+		&& $object_id && absint($_POST['object_id']) == absint($object_id)
+		&& current_user_can( $cmb->prop( 'capability', 'edit_posts' ), $object_id )
 	) {
 		$cmb->save_fields( $object_id, $cmb->object_type(), $_POST );
 	}

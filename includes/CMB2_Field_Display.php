@@ -192,7 +192,7 @@ class CMB2_Display_Text_Money extends CMB2_Field_Display {
 	 */
 	protected function _display() {
 		$this->value = $this->value ? $this->value : '0';
-		echo ( ! $this->field->get_param_callback_result( 'before_field' ) ? '$' : ' ' ), $this->value;
+		echo ( ! $this->field->get_param_callback_result( 'before_field' ) ? '$' : ' ' ), esc_html($this->value);
 	}
 }
 
@@ -232,9 +232,9 @@ class CMB2_Display_Select extends CMB2_Field_Display {
 			$fallback = $options[''];
 		}
 		if ( ! $this->value && $fallback ) {
-			echo $fallback;
+			echo esc_html($fallback);
 		} elseif ( isset( $options[ $this->value ] ) ) {
-			echo $options[ $this->value ];
+			echo esc_html($options[ $this->value ]);
 		} else {
 			echo esc_attr( $this->value );
 		}
@@ -285,7 +285,7 @@ class CMB2_Display_Textarea_Code extends CMB2_Field_Display {
 	 * @since 2.2.2
 	 */
 	protected function _display() {
-		echo '<xmp class="cmb2-code">' . print_r( $this->value, true ) . '</xmp>';
+		echo '<pre class="cmb2-code">' . esc_html( print_r( $this->value, true ) ) . '</pre>';
 	}
 }
 

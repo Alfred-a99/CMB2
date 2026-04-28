@@ -145,8 +145,10 @@ class CMB2_Show_Filters {
 		// Enforce 'show_on' filter in the admin.
 		if ( is_admin() ) {
 
+			$current_page = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+
 			// If there is no 'page' query var, our filter isn't applicable.
-			if ( ! isset( $_GET['page'] ) ) {
+			if ( ! isset( $current_page  ) ) {
 				return $display;
 			}
 
@@ -158,12 +160,12 @@ class CMB2_Show_Filters {
 
 			if ( is_array( $show_on ) ) {
 				foreach ( $show_on as $page ) {
-					if ( $_GET['page'] == $page ) {
+					if ($current_page  === $page ) {
 						return true;
 					}
 				}
 			} else {
-				if ( $_GET['page'] == $show_on ) {
+				if ( $current_page  === $show_on ) {
 					return true;
 				}
 			}

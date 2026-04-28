@@ -132,8 +132,9 @@ class CMB2_Options_Hookup extends CMB2_Hookup {
 	 */
 	public function maybe_register_message() {
 		$is_options_page = self::is_page( $this->option_key );
-		$should_notify   = ! $this->cmb->prop( 'disable_settings_errors' ) && isset( $_GET['settings-updated'] ) && $is_options_page;
-		$is_updated      = $should_notify && 'true' === $_GET['settings-updated'];
+		$settings_updated = isset( $_GET['settings-updated'] )? sanitize_text_field( wp_unslash( $_GET['settings-updated'] ) ): '';
+		$should_notify   = ! $this->cmb->prop( 'disable_settings_errors' ) && isset( $settings_updated ) && $is_options_page;
+		$is_updated      = $should_notify && 'true' === $settings_updated;
 		$setting         = "{$this->option_key}-notices";
 		$code            = '';
 		$message         = __( 'Nothing to update.', 'cmb2' );
@@ -294,12 +295,13 @@ class CMB2_Options_Hookup extends CMB2_Hookup {
 		if ( ! $url ) {
 			$url = admin_url();
 		}
-
+		
+		$action = isset( $_POST['action'] ) ? sanitize_text_field( wp_unslash( $_POST['action'] ) ) : '';
 		if (
 			$this->can_save( 'options-page' )
 			// check params.
-			&& isset( $_POST['submit-cmb'], $_POST['action'] )
-			&& $this->option_key === $_POST['action']
+			&& isset( $_POST['submit-cmb'] )
+			&& $this->option_key === $action
 		) {
 
 			$updated = $this->cmb
